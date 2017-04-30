@@ -1,0 +1,7 @@
+Flask
+Jinja2
+Flask-RESTful
+jsonschema
+git+https://github.com/gusibi/python-weixin.git@master
+pycrypto
+xmltodict

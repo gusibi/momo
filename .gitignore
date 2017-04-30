@@ -1,0 +1,23 @@
+# python
+*.py[cod]
+*.swp
+
+.DS_Store
+
+# build
+.gitconfig
+.installed.cfg
+.ropeproject/
+./momo/ropeproject/
+./momo/__pycache__/
+bin/
+parts/
+eggs/
+build/
+dist/
+
+local_settings.py
+
+# test
+test_example.py
+test_settings.py
