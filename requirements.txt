@@ -1,7 +1,12 @@
+six
+werkzeug
 Flask
+flask_script
 Jinja2
 Flask-RESTful
+xmltodict
 jsonschema
 git+https://github.com/gusibi/python-weixin.git@master
+pyyaml
 pycrypto
 xmltodict
