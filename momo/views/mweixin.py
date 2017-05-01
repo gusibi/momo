@@ -3,8 +3,10 @@ from __future__ import unicode_literals
 
 from six import StringIO
 
+import re
 import xmltodict
 from chatterbot import ChatBot
+from chatterbot.trainers import ListTrainer
 from flask import current_app as app, views
 from flask import Blueprint, request, abort
 
@@ -38,6 +40,8 @@ CUSTOMER_SERVICE_TEMPLATE = '''
 </xml>
 '''
 
+momo_learn = re.compile(r'^momoya:"(?P<ask>\S*)"<"(?P<answer>\S*)"')
+
 
 class ReplyContent(object):
 
@@ -63,6 +67,17 @@ class ReplyContent(object):
             response = momo.get_response(self.content)
             return response.text
         return ''
+
+    def set(self, conversation):
+        if self.momo:
+            momo = ChatBot(
+                '魔魔',
+                storage_adapter='chatterbot.storage.MongoDatabaseAdapter',
+                database='chatterbot',
+            )
+            momo.set_trainer(ListTrainer)
+            momo.train(conversation)
+            return '魔魔学会了！'
 
 
 class CustomerService(WXReply):
@@ -146,8 +161,15 @@ class WXResponse(_WXResponse):
         # 文字消息处理逻辑
         event_key = 'text'
         content = self.data.get('Content')
-        reply_content = ReplyContent('scan', event_key, content)
-        self.reply_params['content'] = reply_content.value
+        match = momo_learn.match(content)
+        if match:
+            conversation = match.groups()
+            reply_content = ReplyContent('text', event_key)
+            response = reply_content.set(conversation)
+            self.reply_params['content'] = response
+        else:
+            reply_content = ReplyContent('text', event_key, content)
+            self.reply_params['content'] = reply_content.value
         self.reply = TextReply(**self.reply_params).render()
 
     def _click_event_handler(self):
