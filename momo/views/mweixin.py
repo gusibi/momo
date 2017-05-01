@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from six import StringIO
 
 import xmltodict
+from chatterbot import ChatBot
 from flask import current_app as app, views
 from flask import Blueprint, request, abort
 
@@ -42,14 +43,25 @@ class ReplyContent(object):
 
     _source = 'value'
 
-    def __init__(self, event, keyword):
+    def __init__(self, event, keyword, content=None, momo=True):
+        self.momo = momo
         self.event = event
+        self.content = content
         self.keyword = keyword
         if self.event == 'scan':
             pass
 
     @property
     def value(self):
+        if self.momo:
+            momo = ChatBot(
+                '魔魔',
+                storage_adapter='chatterbot.storage.MongoDatabaseAdapter',
+                database='chatterbot',
+                read_only=True
+            )
+            response = momo.get_response(self.content)
+            return response.text
         return ''
 
 
@@ -132,11 +144,11 @@ class WXResponse(_WXResponse):
 
     def _text_msg_handler(self):
         # 文字消息处理逻辑
-        self.reply_params['content'] = 'eeeeeee'
-        self.reply = TextReply(**self.reply_params).render()
+        event_key = 'text'
         content = self.data.get('Content')
-        if content:
-            print(content)
+        reply_content = ReplyContent('scan', event_key, content)
+        self.reply_params['content'] = reply_content.value
+        self.reply = TextReply(**self.reply_params).render()
 
     def _click_event_handler(self):
         # 点击菜单事件的逻辑
@@ -166,7 +178,7 @@ class WXRequestView(views.MethodView):
         return 'fail'
 
     def _get_xml(self):
-        post_str = request.data
+        post_str = smart_str(request.data)
         # 验证xml 格式是否正确
         validate_xml(StringIO(post_str))
         return post_str

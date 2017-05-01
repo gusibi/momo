@@ -45,9 +45,10 @@ def register_jinja_funcs(app):
 def register_after_request(app):
 
     def print_error_content(response):
-        if response.status not in [200, 201, 204]:
+        if response.status_code not in [200, 201, 204]:
+            print('>>>>>>')
             print(response.data)
-            return response
+        return response
     app.after_request(print_error_content)
 
 
