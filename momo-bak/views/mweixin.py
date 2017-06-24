@@ -7,10 +7,8 @@ import re
 import xmltodict
 from chatterbot import ChatBot
 from chatterbot.trainers import ListTrainer
-
-from sanic import Blueprint
-from sanic.views import HTTPMethodView
-from sanic.exceptions import ServerError
+from flask import current_app as app, views
+from flask import Blueprint, request, abort
 
 from weixin import WeixinMpAPI
 from weixin.reply import WXReply, TextReply, ArticleReply as _ArticleReply
@@ -22,7 +20,7 @@ from momo.helper import validate_xml, smart_str
 from momo.media import media_fetch, weixin_media_url
 
 
-blueprint = Blueprint('weixin', url_prefix='/weixin')
+blueprint = Blueprint('weixin', __name__, url_prefix='/weixin')
 
 appid = smart_str(Config.WEIXINMP_APPID)
 token = smart_str(Config.WEIXINMP_TOKEN)
@@ -45,20 +43,22 @@ CUSTOMER_SERVICE_TEMPLATE = '''
 
 momo_learn = re.compile(r'^momoya:"(?P<ask>\S*)"<"(?P<answer>\S*)"')
 
-# momo_chat = ChatBot(
-#     'Momo',
-#     storage_adapter='chatterbot.storage.MongoDatabaseAdapter',
-#     logic_adapters=[
-#         "chatterbot.logic.BestMatch",
-#         "chatterbot.logic.MathematicalEvaluation",
-#         "chatterbot.logic.TimeLogicAdapter",
-#     ],
-#     input_adapter='chatterbot.input.VariableInputTypeAdapter',
-#     output_adapter='chatterbot.output.OutputAdapter',
-#     database='chatterbot',
-#     read_only=True
-# )
-momo_chat = None
+momo_chat = ChatBot(
+    'Momo',
+    storage_adapter='chatterbot.storage.MongoDatabaseAdapter',
+    # storage_adapter="chatterbot.storage.JsonFileStorageAdapter",
+    logic_adapters=[
+        "chatterbot.logic.BestMatch",
+        "chatterbot.logic.MathematicalEvaluation",
+        "chatterbot.logic.TimeLogicAdapter",
+    ],
+    input_adapter='chatterbot.input.VariableInputTypeAdapter',
+    output_adapter='chatterbot.output.OutputAdapter',
+    # database='~/chatterbot.db',
+    database='chatterbot',
+    # database_uri='mongodb://localhost:27017/',
+    read_only=True
+)
 
 
 
@@ -199,14 +199,14 @@ class WXResponse(_WXResponse):
         pass
 
 
-class WXRequestView(HTTPMethodView):
+class WXRequestView(views.MethodView):
 
-    def _get_args(self, request):
+    def _get_args(self):
         params = request.args.to_dict()
         if not params:
-            raise ServerError("invalid params", status_code=400)
+            abort(400)
         args = {
-            'mp_token': Config.WEIXINMP_TOKEN,
+            'mp_token': app.config['WEIXINMP_TOKEN'],
             'signature': params.get('signature'),
             'timestamp': params.get('timestamp'),
             'echostr': params.get('echostr'),
@@ -214,7 +214,7 @@ class WXRequestView(HTTPMethodView):
         }
         return args
 
-    def get(self, request):
+    def get(self):
         args = self._get_args()
         weixin = WeixinMpAPI(**args)
         if weixin.validate_signature():
@@ -241,7 +241,7 @@ class WXRequestView(HTTPMethodView):
         ret, encrypt_xml = crypt.EncryptMsg(to_xml, nonce)
         return encrypt_xml
 
-    def post(self, request):
+    def post(self):
         args = self._get_args()
         weixin = WeixinMpAPI(**args)
         if not weixin.validate_signature():
@@ -255,4 +255,5 @@ class WXRequestView(HTTPMethodView):
         return encryp_xml or xml
 
 
-blueprint.add_route(WXRequestView.as_view(), '/request')
+blueprint.add_url_rule('/request', endpoint='request',
+                       view_func=WXRequestView.as_view('request'))

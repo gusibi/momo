@@ -1,6 +1,9 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 from os import environ
 from six.moves.urllib.parse import urlparse
 
+# from .error_codes import error_codes
 
 
 class Config(object):

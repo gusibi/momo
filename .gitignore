@@ -11,11 +11,14 @@
 ./momo/ropeproject/
 ./__pycache__/
 ./momo/__pycache__/
+.idea/
 bin/
 parts/
 eggs/
 build/
 dist/
+access.log*
+error.log*
 
 local_settings.py
 

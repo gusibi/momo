@@ -10,3 +10,4 @@ git+https://github.com/gusibi/python-weixin.git@master
 pyyaml
 pycrypto
 xmltodict
+chatterbot

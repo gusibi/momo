@@ -1,28 +1,23 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
+import asyncio
 
-from flask import Flask
-from werkzeug.utils import import_string
+import uvloop
+from sanic import Sanic
+from sanic.response import text, json
 
 from momo.settings import Config
 
 
-blueprints = [
-    'momo.views.mweixin:blueprint',
-    'momo.views.hello:blueprint',
-]
+blueprints = []
 
 
 def create_app(register_bp=True, test=False):
-    app = Flask(__name__, static_folder='static')
+    app = Sanic(__name__)
     if test:
         app.config['TESTING'] = True
     app.config.from_object(Config)
-    register_extensions(app)
-    register_before_request(app)
-    register_after_request(app)
-    if register_bp:
-        register_blueprints(app)
+    print('>' * 100)
+    register_blueprints(app)
     return app
 
 
@@ -31,30 +26,24 @@ def register_extensions(app):
 
 
 def register_blueprints(app):
-    for bp in blueprints:
-        app.register_blueprint(import_string(bp))
+    from momo.views.hello import blueprint as hello_bp
+    from momo.views.mweixin import blueprint as wx_bp
+    print(hello_bp)
+    app.register_blueprint(hello_bp)
+    app.register_blueprint(wx_bp)
+    print(hello_bp)
 
 
 def register_jinja_funcs(app):
-    funcs = dict(
-    )
-    app.jinja_env.globals.update(funcs)
+    funcs = dict()
     return app
 
-
-def register_after_request(app):
-
-    def print_error_content(response):
-        if response.status_code not in [200, 201, 204]:
-            print('>>>>>>')
-            print(response.data)
-        return response
-    app.after_request(print_error_content)
-
-
-def register_before_request(app):
-    def get_request_ip():
-        from flask import g, request
-        g.ip = request.headers.get('x-forwarded-for') or request.remote_addr
-
-    app.before_request(get_request_ip)
+app = create_app()
+asyncio.set_event_loop(uvloop.new_event_loop())
+server = app.create_server(host="0.0.0.0", port=8000)
+loop = asyncio.get_event_loop()
+task = asyncio.ensure_future(server)
+try:
+    loop.run_forever()
+except:
+    loop.stop()
