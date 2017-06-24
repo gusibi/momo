@@ -12,12 +12,18 @@ Description: Weixin helpers
 """
 
 import sys
+import time
 import datetime
+
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
+from functools import wraps
 from hashlib import sha1
 from decimal import Decimal
 
 import six
-from six.moves import html_parser
 
 PY2 = sys.version_info[0] == 2
 
@@ -328,37 +334,6 @@ def url_encode(obj, charset='utf-8', encode_keys=False, sort=False, key=None,
     return separator.join(_url_encode_impl(obj, charset, encode_keys, sort, key))
 
 
-class WeixiErrorParser(html_parser.HTMLParser):
-
-    def __init__(self):
-        html_parser.HTMLParser.__init__(self)
-        self.recording = 0
-        self.data = []
-
-    def handle_starttag(self, tag, attrs):
-        if tag != 'h4':
-            return
-        if self.recording:
-            self.recording += 1
-        self.recording = 1
-
-    def handle_endtag(self, tag):
-        if tag == 'h4' and self.recording:
-            self.recording -= 1
-
-    def handle_data(self, data):
-        if self.recording:
-            self.data.append(data)
-
-
-def error_parser(error_html, encoding='gbk'):
-    html = text_type(error_html, encoding or 'gbk')
-    error_parser = WeixiErrorParser()
-    error_parser.feed(html)
-    if error_parser.data:
-        return error_dict.get(error_parser.data[0], None)
-
-
 def validate_xml(xml):
     """
     使用lxml.etree.parse 检测xml是否符合语法规范
@@ -368,3 +343,40 @@ def validate_xml(xml):
         return etree.parse(xml)
     except etree.XMLSyntaxError:
         return False
+
+
+def cache_for(duration):
+
+    def deco(func):
+        @wraps(func)
+        def fn(*args, **kwargs):
+            all_args = []
+            all_args.append(args)
+            key = pickle.dumps((all_args, kwargs))
+            value, expire = func.__dict__.get(key, (None, None))
+            now = int(time.time())
+            if value is not None and expire > now:
+                return value
+            value = func(*args, **kwargs)
+            func.__dict__[key] = (value, int(time.time()) + duration)
+            return value
+        return fn
+
+    return deco
+
+
+@cache_for(60 * 60)
+def get_weixinmp_token(appid, app_secret, is_refresh=False):
+    from weixin import WeixinMpAPI
+    from weixin.oauth2 import (ConnectTimeoutError,
+                               ConnectionError,
+                               OAuth2AuthExchangeError)
+    try:
+        api = WeixinMpAPI(
+            appid=appid, app_secret=app_secret,
+            grant_type='client_credential')
+        token = api.client_credential_for_access_token().get('access_token')
+        return token, None
+    except (OAuth2AuthExchangeError, ConnectTimeoutError,
+            ConnectionError) as ex:
+        return None, ex

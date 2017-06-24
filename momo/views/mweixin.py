@@ -17,6 +17,7 @@ from weixin.lib.WXBizMsgCrypt import WXBizMsgCrypt
 
 from momo.settings import Config
 from momo.helper import validate_xml, smart_str
+from momo.media import media_fetch, weixin_media_url
 
 
 blueprint = Blueprint('weixin', __name__, url_prefix='/weixin')
@@ -42,6 +43,24 @@ CUSTOMER_SERVICE_TEMPLATE = '''
 
 momo_learn = re.compile(r'^momoya:"(?P<ask>\S*)"<"(?P<answer>\S*)"')
 
+momo_chat = ChatBot(
+    'Momo',
+    storage_adapter='chatterbot.storage.MongoDatabaseAdapter',
+    # storage_adapter="chatterbot.storage.JsonFileStorageAdapter",
+    logic_adapters=[
+        "chatterbot.logic.BestMatch",
+        "chatterbot.logic.MathematicalEvaluation",
+        "chatterbot.logic.TimeLogicAdapter",
+    ],
+    input_adapter='chatterbot.input.VariableInputTypeAdapter',
+    output_adapter='chatterbot.output.OutputAdapter',
+    # database='~/chatterbot.db',
+    database='chatterbot',
+    # database_uri='mongodb://localhost:27017/',
+    read_only=True
+)
+
+
 
 class ReplyContent(object):
 
@@ -58,25 +77,16 @@ class ReplyContent(object):
     @property
     def value(self):
         if self.momo:
-            momo = ChatBot(
-                '魔魔',
-                storage_adapter='chatterbot.storage.MongoDatabaseAdapter',
-                database='chatterbot',
-                read_only=True
-            )
-            response = momo.get_response(self.content)
+            response = momo_chat.get_response(self.content)
+            if isinstance(response, str):
+                return response
             return response.text
         return ''
 
     def set(self, conversation):
         if self.momo:
-            momo = ChatBot(
-                '魔魔',
-                storage_adapter='chatterbot.storage.MongoDatabaseAdapter',
-                database='chatterbot',
-            )
-            momo.set_trainer(ListTrainer)
-            momo.train(conversation)
+            momo_chat.set_trainer(ListTrainer)
+            momo_chat.train(conversation)
             return '魔魔学会了！'
 
 
@@ -156,6 +166,18 @@ class WXResponse(_WXResponse):
             self.reply = TextReply(**self.reply_params).render()
         else:
             return
+
+    def _image_msg_handler(self):
+        media_id = self.data['MediaId']
+        # 个人订阅号不支持
+        # picurl = weixin_media_url(media_id)
+        picurl = None
+        if not picurl:
+            picurl = self.data['PicUrl']
+        is_succeed, media_key = media_fetch(picurl, media_id)
+        qiniu_url = '{host}/{key}'.format(host=Config.QINIU_HOST, key=media_key)
+        self.reply_params['content'] = qiniu_url
+        self.reply = TextReply(**self.reply_params).render()
 
     def _text_msg_handler(self):
         # 文字消息处理逻辑

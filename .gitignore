@@ -9,6 +9,7 @@
 .installed.cfg
 .ropeproject/
 ./momo/ropeproject/
+./__pycache__/
 ./momo/__pycache__/
 bin/
 parts/

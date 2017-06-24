@@ -30,18 +30,18 @@ class Config(object):
     # 微信获取用户信息接口
     WX_USER_INFO_URL = 'https://api.weixin.qq.com/cgi-bin/user/info'
 
-    QINIU_ACCESS_TOKEN = ''
-    QINIU_SECRET_TOKEN = ''
+    QINIU_ACCESS_TOKEN = environ.get('QINIU_ACCESS_TOKEN', '')
+    QINIU_SECRET_TOKEN = environ.get('QINIU_SECRET_TOKEN', '')
     QINIU_UPLOAD_URL = 'http://up.qiniu.com/'
-    QINIU_DOMAIN = environ.get('QINIU_DOMAIN', 'medias.gusibi.com')
-    QINIU_DOMAINS = [QINIU_DOMAIN, 'oddfrn1vt.qnssl.com']
-    QINIU_HOST = "https://%s" % QINIU_DOMAIN
+    QINIU_DOMAIN = environ.get('QINIU_DOMAIN', 'media.gusibi.mobi')
+    QINIU_DOMAINS = [QINIU_DOMAIN, 'omuo4kh1k.bkt.clouddn.com']
+    QINIU_HOST = "http://%s" % QINIU_DOMAIN
     QINIU_NOTIFY_URL = '%s/qiniu/pfop/notify' % DOMAIN
-    QINIU_PUBLIC_BUCKET = 'gusibi'
+    QINIU_BUCKET = environ.get('QINIU_BUCKET', 'blog')
 
     QINIU_AUDIOS_TIME_KEY = environ.get('QINIU_AUDIOS_TIME_KEY', '')
     QINIU_AUDIOS_HOST = environ.get('QINIU_AUDIOS_HOST',
-                                    'https://audios.gusibi.com')
+                                    'http://omuo4kh1k.bkt.clouddn.com')
 
     QINIU_AUDIOS_CONFIG = {
         'access_key': QINIU_ACCESS_TOKEN,
