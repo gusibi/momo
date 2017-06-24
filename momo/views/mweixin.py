@@ -10,6 +10,7 @@ from chatterbot.trainers import ListTrainer
 
 from sanic import Blueprint
 from sanic.views import HTTPMethodView
+from sanic.response import text
 from sanic.exceptions import ServerError
 
 from weixin import WeixinMpAPI
@@ -45,20 +46,19 @@ CUSTOMER_SERVICE_TEMPLATE = '''
 
 momo_learn = re.compile(r'^momoya:"(?P<ask>\S*)"<"(?P<answer>\S*)"')
 
-# momo_chat = ChatBot(
-#     'Momo',
-#     storage_adapter='chatterbot.storage.MongoDatabaseAdapter',
-#     logic_adapters=[
-#         "chatterbot.logic.BestMatch",
-#         "chatterbot.logic.MathematicalEvaluation",
-#         "chatterbot.logic.TimeLogicAdapter",
-#     ],
-#     input_adapter='chatterbot.input.VariableInputTypeAdapter',
-#     output_adapter='chatterbot.output.OutputAdapter',
-#     database='chatterbot',
-#     read_only=True
-# )
-momo_chat = None
+momo_chat = ChatBot(
+    'Momo',
+    storage_adapter='chatterbot.storage.MongoDatabaseAdapter',
+    logic_adapters=[
+        "chatterbot.logic.BestMatch",
+        "chatterbot.logic.MathematicalEvaluation",
+        "chatterbot.logic.TimeLogicAdapter",
+    ],
+    input_adapter='chatterbot.input.VariableInputTypeAdapter',
+    output_adapter='chatterbot.output.OutputAdapter',
+    database='chatterbot',
+    read_only=True
+)
 
 
 
@@ -202,7 +202,7 @@ class WXResponse(_WXResponse):
 class WXRequestView(HTTPMethodView):
 
     def _get_args(self, request):
-        params = request.args.to_dict()
+        params = request.raw_args
         if not params:
             raise ServerError("invalid params", status_code=400)
         args = {
@@ -215,20 +215,19 @@ class WXRequestView(HTTPMethodView):
         return args
 
     def get(self, request):
-        args = self._get_args()
+        args = self._get_args(request)
         weixin = WeixinMpAPI(**args)
         if weixin.validate_signature():
-            return args.get('echostr') or 'fail'
-        return 'fail'
+            return text(args.get('echostr') or 'fail')
+        return text('fail')
 
-    def _get_xml(self):
-        post_str = smart_str(request.data)
+    def _get_xml(self, data):
+        post_str = smart_str(data)
         # 验证xml 格式是否正确
         validate_xml(StringIO(post_str))
         return post_str
 
-    def _decrypt_xml(self, crypt, xml_str):
-        params = request.args.to_dict()
+    def _decrypt_xml(self, params, crypt, xml_str):
         nonce = params.get('nonce')
         msg_sign = params.get('msg_signature')
         timestamp = params.get('timestamp')
@@ -242,17 +241,17 @@ class WXRequestView(HTTPMethodView):
         return encrypt_xml
 
     def post(self, request):
-        args = self._get_args()
+        args = self._get_args(request)
         weixin = WeixinMpAPI(**args)
         if not weixin.validate_signature():
             raise AttributeError("Invalid weixin signature")
-        xml_str = self._get_xml()
+        xml_str = self._get_xml(request.body)
         crypt = WXBizMsgCrypt(token, encoding_aeskey, appid)
-        decryp_xml, nonce = self._decrypt_xml(crypt, xml_str)
+        decryp_xml, nonce = self._decrypt_xml(request.raw_args, crypt, xml_str)
         xml_dict = xmltodict.parse(decryp_xml)
         xml = WXResponse(xml_dict)() or 'success'
         encryp_xml = self._encryp_xml(crypt, xml, nonce)
-        return encryp_xml or xml
+        return text(encryp_xml or xml)
 
 
 blueprint.add_route(WXRequestView.as_view(), '/request')
