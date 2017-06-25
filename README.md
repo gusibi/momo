@@ -1,5 +1,21 @@
 # momo
-微信聊天机器人
+微信记账助手
+
+# 测试使用请关注微信公号(April_Louisa)测试
+
+![](http://media.gusibi.mobi/Hy8XHexmzppNKuekLuGxWy8LjdGrQAzZA3mH_e9xltoiYgTFWdvlpZwGWxZESrbK)
+
+## 实现功能
+
+* 微信聊天机器人
+* 支持训练
+* 特定用户发送图片返回七牛地址
+
+## TODO
+
+* 支持记账
+* 对记账结果统计
+* 详细配置过程
 
 
 # 启动命令
