@@ -31,12 +31,12 @@ def register_blueprints(app):
 
 
 def register_jinja_funcs(app):
-    funcs = dict()
+    # funcs = dict()
     return app
 
 app = create_app()
 asyncio.set_event_loop(uvloop.new_event_loop())
-server = app.create_server(host="0.0.0.0", port=8888)
+server = app.create_server(host="0.0.0.0", port=8000, debug=True)
 loop = asyncio.get_event_loop()
 task = asyncio.ensure_future(server)
 try:

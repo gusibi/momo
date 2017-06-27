@@ -2,7 +2,6 @@ from os import environ
 from six.moves.urllib.parse import urlparse
 
 
-
 class Config(object):
 
     DEBUG = True
@@ -11,6 +10,12 @@ class Config(object):
     SECRET_KEY = '53a01e6bd34caef997eed24f5ee9d3e0'
 
     STATIC_FOLDER = 'static'
+
+    MONGO_MASTER_HOST = environ.get('MONGO_PORT_27017_TCP_ADDR', 'localhost')
+    MONGO_MASTER_PORT = environ.get('MONGO_PORT_27017_TCP_PORT', '27017')
+    MONGO_DATABASE = environ.get('MONGO_DATABASE', 'momo_bill')
+    MONGO_MASTER_URL = 'mongodb://%s:%s' % (MONGO_MASTER_HOST,
+                                            MONGO_MASTER_PORT)
 
     APP_TRANSPORT = environ.get('APP_TRANSPORT', 'http')
     APP_DOMAIN = environ.get('APP_DOMAIN', 'http://gusibi.com')
