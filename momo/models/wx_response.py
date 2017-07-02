@@ -102,8 +102,9 @@ class BillWorkFlow(object):
         if account:
             return {'next': 'input_username'}, '用户名已被使用，请重新输入'
         Account.update_or_insert(fields=['_id'],
-                                           _id=self.uid,
-                                           username=username)
+                                 _id=self.uid,
+                                 username=username,
+                                 created_time=datetime.utcnow())
         action = self.actions['input_username']
         return {'next': action['next']}, action['value']
 
