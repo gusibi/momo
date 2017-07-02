@@ -11,7 +11,7 @@ class Config(object):
 
     STATIC_FOLDER = 'static'
 
-    MONGO_MASTER_HOST = environ.get('MONGO_PORT_27017_TCP_ADDR', 'localhost')
+    MONGO_MASTER_HOST = environ.get('MONGO_PORT_27017_TCP_ADDR', '127.0.0.1')
     MONGO_MASTER_PORT = environ.get('MONGO_PORT_27017_TCP_PORT', '27017')
     MONGO_DATABASE = environ.get('MONGO_DATABASE', 'momo_bill')
     MONGO_MASTER_URL = 'mongodb://%s:%s' % (MONGO_MASTER_HOST,

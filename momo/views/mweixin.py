@@ -188,17 +188,19 @@ class WXResponse(_WXResponse):
         content = self.data.get('Content')
         match = momo_learn.match(content)
         if match:
+            # 教魔魔说话第一优先级
             conversation = match.groups()
             reply_content = ReplyContent('text', event_key)
             response = reply_content.set(conversation)
             self.reply_params['content'] = response
         else:
-            kwr = KWR('gs', content)
+            # 再查询有没有特殊自动回复消息workflow
+            to_user = self.reply_params['to_user']
+            kwr = KWR(to_user, content)
             value = kwr.get_response()
             if not value:
                 reply_content = ReplyContent('text', event_key, content)
                 value = reply_content.value
-            print(value, type(value))
             self.reply_params['content'] = value
         self.reply = TextReply(**self.reply_params).render()
 
