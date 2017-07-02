@@ -35,6 +35,8 @@ Hi，朋友！
 
 这是我妈四月的公号，我是魔魔，我可以陪你聊天呦！
 
+我还能"记账"，输入"记账"会有惊喜呦！
+
 <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=MzAwNjI5MjAzNw==&scene=124#wechat_redirect">历史记录</a>
 """
 
