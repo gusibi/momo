@@ -116,7 +116,7 @@ class BillWorkFlow(object):
             return {'next': 'input_amount'}, '输入的金额不正确，请重新输入'
         data = {
             'uid': self.uid,
-            'money': self.kw
+            'money': amount
         }
         msg = '%s%s' % (action['value'], self._get_all_tags())
         return {'next': action['next'], 'data': data}, msg
