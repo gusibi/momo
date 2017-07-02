@@ -21,6 +21,7 @@ from weixin.lib.WXBizMsgCrypt import WXBizMsgCrypt
 from momo.settings import Config
 from momo.helper import validate_xml, smart_str
 from momo.media import media_fetch, weixin_media_url
+from momo.models.wx_response import KWResponse as KWR
 
 
 blueprint = Blueprint('weixin', url_prefix='/weixin')
@@ -33,6 +34,8 @@ AUTO_REPLY_CONTENT = """
 Hi，朋友！
 
 这是我妈四月的公号，我是魔魔，我可以陪你聊天呦！
+
+<a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=MzAwNjI5MjAzNw==&scene=124#wechat_redirect">历史记录</a>
 """
 
 CUSTOMER_SERVICE_TEMPLATE = '''
@@ -190,8 +193,13 @@ class WXResponse(_WXResponse):
             response = reply_content.set(conversation)
             self.reply_params['content'] = response
         else:
-            reply_content = ReplyContent('text', event_key, content)
-            self.reply_params['content'] = reply_content.value
+            kwr = KWR('gs', content)
+            value = kwr.get_response()
+            if not value:
+                reply_content = ReplyContent('text', event_key, content)
+                value = reply_content.value
+            print(value, type(value))
+            self.reply_params['content'] = value
         self.reply = TextReply(**self.reply_params).render()
 
     def _click_event_handler(self):

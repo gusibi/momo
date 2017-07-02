@@ -36,7 +36,7 @@ def register_jinja_funcs(app):
 
 app = create_app()
 asyncio.set_event_loop(uvloop.new_event_loop())
-server = app.create_server(host="0.0.0.0", port=8000, debug=True)
+server = app.create_server(host="0.0.0.0", port=8888, debug=True)
 loop = asyncio.get_event_loop()
 task = asyncio.ensure_future(server)
 try:
