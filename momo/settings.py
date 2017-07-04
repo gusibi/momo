@@ -2,15 +2,12 @@ from os import environ
 from six.moves.urllib.parse import urlparse
 
 
-
 class Config(object):
 
-    DEBUG = True
+    DEBUG = False
     TESTING = False
 
-    SECRET_KEY = '53a01e6bd34caef997eed24f5ee9d3e0'
-
-    STATIC_FOLDER = 'static'
+    SECRET_KEY = 'MmPNFrWjQZ3Z9yKZ8PMFQttgHphaq8AZ'
 
     APP_TRANSPORT = environ.get('APP_TRANSPORT', 'http')
     APP_DOMAIN = environ.get('APP_DOMAIN', 'http://gusibi.com')
@@ -23,9 +20,6 @@ class Config(object):
     WEIXINMP_TOKEN = environ.get('WEIXINMP_TOKEN', 'token')
     WEIXINMP_ENCODINGAESKEY = environ.get(
         'WEIXINMP_ENCODINGAESKEY', '')
-
-    # 微信获取用户信息接口
-    WX_USER_INFO_URL = 'https://api.weixin.qq.com/cgi-bin/user/info'
 
     QINIU_ACCESS_TOKEN = environ.get('QINIU_ACCESS_TOKEN', '')
     QINIU_SECRET_TOKEN = environ.get('QINIU_SECRET_TOKEN', '')
