@@ -23,18 +23,6 @@ def generate_nonce_str(length=32):
         letters + digits) for _ in range(length))
 
 
-def weixin_media_url(media_id):
-    from momo.helper import get_weixinmp_token
-    appid = Config.WEIXINMP_APPID
-    app_secret = Config.WEIXINMP_APP_SECRET
-    url = 'http://file.api.weixin.qq.com/cgi-bin/media/get?access_token=%s&media_id=%s'
-    access_token, errors = get_weixinmp_token(appid, app_secret)
-    if errors:
-        return
-    media_url = url % (access_token, media_id)
-    return media_url
-
-
 class QiniuUriGen():
 
     __version__ = '1.0'

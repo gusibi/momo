@@ -5,7 +5,6 @@ from six import StringIO
 
 import re
 import xmltodict
-from chatterbot import ChatBot
 from chatterbot.trainers import ListTrainer
 
 from sanic import Blueprint
@@ -19,7 +18,7 @@ from weixin.response import WXResponse as _WXResponse
 from weixin.lib.WXBizMsgCrypt import WXBizMsgCrypt
 
 from momo.settings import Config
-from momo.helper import validate_xml, smart_str
+from momo.helper import validate_xml, smart_str, get_momo_answer
 from momo.media import media_fetch
 
 
@@ -46,20 +45,6 @@ CUSTOMER_SERVICE_TEMPLATE = '''
 
 momo_learn = re.compile(r'^momoya:"(?P<ask>\S*)"<"(?P<answer>\S*)"')
 
-momo_chat = ChatBot(
-    'Momo',
-    storage_adapter='chatterbot.storage.MongoDatabaseAdapter',
-    logic_adapters=[
-        "chatterbot.logic.BestMatch",
-        "chatterbot.logic.MathematicalEvaluation",
-        "chatterbot.logic.TimeLogicAdapter",
-    ],
-    input_adapter='chatterbot.input.VariableInputTypeAdapter',
-    output_adapter='chatterbot.output.OutputAdapter',
-    database='chatterbot',
-    read_only=True
-)
-
 
 class ReplyContent(object):
 
@@ -76,10 +61,8 @@ class ReplyContent(object):
     @property
     def value(self):
         if self.momo:
-            response = momo_chat.get_response(self.content)
-            if isinstance(response, str):
-                return response
-            return response.text
+            answer = get_momo_answer(self.content)
+            return answer
         return ''
 
     def set(self, conversation):

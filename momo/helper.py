@@ -23,6 +23,9 @@ from functools import wraps
 from hashlib import sha1
 from decimal import Decimal
 
+
+from chatterbot import ChatBot
+
 import six
 
 PY2 = sys.version_info[0] == 2
@@ -77,6 +80,29 @@ except ImportError:
     import sha
     sha_constructor = sha.new
     sha_hmac = sha
+
+
+momo_chat = ChatBot(
+    'Momo',
+    storage_adapter='chatterbot.storage.MongoDatabaseAdapter',
+    logic_adapters=[
+        "chatterbot.logic.BestMatch",
+        "chatterbot.logic.MathematicalEvaluation",
+        "chatterbot.logic.TimeLogicAdapter",
+    ],
+    input_adapter='chatterbot.input.VariableInputTypeAdapter',
+    output_adapter='chatterbot.output.OutputAdapter',
+    database='chatterbot',
+    read_only=True
+)
+
+
+def get_momo_answer(content):
+    response = momo_chat.get_response(content)
+    if isinstance(response, str):
+        return response
+    return response.text
+
 
 
 class Promise(object):
