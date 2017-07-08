@@ -99,7 +99,10 @@ class WXResponse(_WXResponse):
         if not picurl:
             picurl = self.data['PicUrl']
         is_succeed, media_key = media_fetch(picurl, media_id)
-        qiniu_url = '{host}/{key}'.format(host=Config.QINIU_HOST, key=media_key)
+        if is_succeed:
+            qiniu_url = '{host}/{key}'.format(host=Config.QINIU_HOST, key=media_key)
+        else:
+            qiniu_url = '图片上传失败'
         self.reply_params['content'] = qiniu_url
         self.reply = TextReply(**self.reply_params).render()
 
