@@ -1,6 +1,7 @@
 # momo
 微信记账助手
 
+
 # 测试使用请关注微信公号(April_Louisa)测试
 
 ![](http://media.gusibi.mobi/Hy8XHexmzppNKuekLuGxWy8LjdGrQAzZA3mH_e9xltoiYgTFWdvlpZwGWxZESrbK)
@@ -15,10 +16,32 @@
 
 * 支持记账
 * 对记账结果统计
-* 详细配置过程
+
+## 安装& 使用
+
+### 获取代码
 
 
-# 启动命令
+```
+git clone git@github.com:gusibi/momo.git
+git co -b chatterbot
+git pull origin chatterbot
+
+```
+
+### 安装依赖
+
+```
+pip install -r requirements.txt -i http://pypi.douban.com/simple --trusted-host pypi.douban.com
+```
+
+### 运行
+
+```
+python manage.py
+```
+
+## spuervisord 启动命令
 
 ```
 supervisord -c supervisor.conf                             通过配置文件启动supervisor
