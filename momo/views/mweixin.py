@@ -55,7 +55,11 @@ momo_chat = ChatBot(
     'Momo',
     storage_adapter='chatterbot.storage.MongoDatabaseAdapter',
     logic_adapters=[
-        "chatterbot.logic.BestMatch",
+        {
+            "import_path": "chatterbot.logic.BestMatch",
+            "statement_comparison_function": "chatterbot.comparisons.levenshtein_distance",
+            "response_selection_method": "chatterbot.response_selection.get_first_response"
+        },
         "chatterbot.logic.MathematicalEvaluation",
         "chatterbot.logic.TimeLogicAdapter",
     ],
@@ -132,8 +136,7 @@ class WXResponse(_WXResponse):
     auto_reply_content = AUTO_REPLY_CONTENT
 
     def _subscribe_event_handler(self):
-        content = ReplyContent('subscribe', 'subscribe')
-        self.reply_params['content'] = content.value or self.auto_reply_content
+        self.reply_params['content'] = self.auto_reply_content
         self.reply = TextReply(**self.reply_params).render()
 
     def _unsubscribe_event_handler(self):

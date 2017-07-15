@@ -40,5 +40,5 @@ class Tags(HTTPMethodView):
 
 
 blueprint.add_route(Index.as_view(), '/')
-blueprint.add_route(Tags.as_view(), '/add_tag')
+# blueprint.add_route(Tags.as_view(), '/add_tag')
 blueprint.add_route(KWResponse.as_view(), '/kwr')
