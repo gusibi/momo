@@ -3,7 +3,7 @@ from datetime import datetime
 
 from momo.models import Model
 from momo.models.bill import Bill, Tag
-from momo.models.account import Account, AccountWorkflow as AW
+from momo.models.account import Account, AccountWorkflow as AW, UserWorkFlow
 
 
 class WXKeyWord(Model):
@@ -31,15 +31,22 @@ class WXKeyWord(Model):
 
 class KWResponse:
 
-    def __init__(self, uid, kw):
+    def __init__(self, uid, word):
         self.uid = uid
-        self.kw = kw
+        self.word = word  # key word
 
     def _get_data(self):
-        value = BillWorkFlow(self.uid, self.kw).get_result()
-        if not value:
-            return None
-        print(value)
+        kw = WXKeyWord.get(word=self.word)
+        aw = AW.get(uid=self.uid) or {}
+        if not (kw or aw):
+            return
+        workflow_key = kw.get('data', {}).get('workflow') if kw else None
+        if workflow_key == BillWorkFlow.name or aw.get('workflow') == BillWorkFlow.name:
+            value = BillWorkFlow(self.uid, self.word, wxkw=kw, aw=aw).get_result()
+        elif workflow_key == UserWorkFlow.name or aw.get('workflow') == UserWorkFlow.name:
+            value = UserWorkFlow(self.uid, self.word, wxkw=kw, aw=aw).get_result()
+        else:
+            return
         return value
 
     def get_response(self):
@@ -67,18 +74,28 @@ class BillWorkFlow(object):
                 'next': 'input_amount',
             },
             'input_amount':{
-                'value': '请选择分类: \n',
+                'value': '请选择分类: \n%s\n重新输入金额请输入"修改"',
                 'next': 'input_tag',
             },
             'input_tag': {
                 'value': '记账完成，可以再次输入"记账"记录下一笔',
+            },
+            'again': {
+                'value': '请重新输入金额',
+                'next': 'input_amount',
+            },
+            'cancel': {
+                'value': '已取消记账, 可以重新输入"记账"开始记账。',
+                'next': 'clear',
             }
         }
     name = 'keep_accounts'
 
-    def __init__(self, uid, kw):
+    def __init__(self, uid, word, wxkw=None, aw=None):
         self.uid = uid
-        self.kw = kw
+        self.word = word
+        self.wxkw = wxkw  # weixin key word instance
+        self.aw = aw
 
     def _get_all_tags(self):
         tags = Tag.find(limit=100)
@@ -97,7 +114,7 @@ class BillWorkFlow(object):
         return {'next': action[status]['next']}, action[status]['value']
 
     def process_input_username(self):
-        username = self.kw
+        username = self.word
         account = Account.get(username=username)
         if account:
             return {'next': 'input_username'}, '用户名已被使用，请重新输入'
@@ -111,58 +128,76 @@ class BillWorkFlow(object):
     def process_input_amount(self):
         action = self.actions['input_amount']
         try:
-            amount = float(self.kw)
-        except ValueError:
+            amount = float(self.word)
+        except (ValueError, TypeError):
             return {'next': 'input_amount'}, '输入的金额不正确，请重新输入'
         data = {
             'uid': self.uid,
             'money': amount
         }
-        msg = '%s%s' % (action['value'], self._get_all_tags())
+        msg = action['value'] % self._get_all_tags()
         return {'next': action['next'], 'data': data}, msg
+
+    def process_again(self):
+        action = self.actions['again']
+        aw = AW.get(uid=self.uid)
+        if not aw:
+            return {}, None
+        data = {
+            'uid': self.uid,
+        }
+        return {'next': action['next']}, action['value']
+
+    def process_cancel(self):
+        action = self.actions['cancel']
+        aw = AW.get(uid=self.uid)
+        if not aw:
+            return {}, None
+        return {'next': action['next']}, action['value']
 
     def process_input_tag(self):
         action = self.actions['input_tag']
-        aw = AW.get(_id=self.uid)
+        aw = AW.get(uid=self.uid)
         if not aw:
             return {}, None
         data = aw['data']
-        tag = Tag.get(name=self.kw)
+        tag = Tag.get(name=self.word)
         if not tag:
             names = self._get_all_tags()
             msg = '暂不允许此分类，分类列表如下: \n%s\n请重新输入' % names
             return {'data': data, 'next': 'input_tag'}, msg
-        data['tag'] = self.kw
+        data['tag'] = self.word
         return {'data': data, 'next': 'done'}, action['value']
 
     def process_workflow(self, action):
         function_name = 'process_{action}'.format(action=action)
         function = getattr(self, function_name)
         params, value = function()
-        params['_id'] = self.uid
+        params['uid'] = self.uid
         next = params.get('next')
         if next == 'done':
             data = params['data']
             data['created_time'] = datetime.utcnow()
             Bill.create(**data)
-            AW.delete(_id=self.uid)
+            AW.delete(uid=self.uid)
+        elif next == 'clear':
+            AW.delete(uid=self.uid)
         else:
-            AW.update_or_insert(fields=['_id'], **params)
+            print(params)
+            if self.uid:
+                params['workflow'] = self.name
+                AW.update_or_insert(fields=['uid'], **params)
         return value
 
     def get_result(self):
-        kw = WXKeyWord.get(word=self.kw)
-        aw = AW.get(_id=self.uid)
-        if kw:
-            data = kw['data']
-            workflow_key = data.get('workflow')
-            if not workflow_key or workflow_key != self.name:
-                return data
-            action = data.get('action', 'active')
+        print(self.wxkw)
+        if self.wxkw:
+            action = self.wxkw['data'].get('action', 'active')
+            print('action', action)
             value = self.process_workflow(action)
             return value
-        elif aw:
-            value = self.process_workflow(aw['next'])
+        elif self.aw:
+            value = self.process_workflow(self.aw['next'])
             return value
         else:
             return

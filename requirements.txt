@@ -1,8 +1,8 @@
 six
+Sanic
 xmltodict
 jsonschema
-git+https://github.com/gusibi/python-weixin.git@master
+git+https://github.com/gusibi/python-weixin.git@py3
 pyyaml
 pycrypto
-xmltodict
 chatterbot

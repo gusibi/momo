@@ -5,7 +5,6 @@ from six import StringIO
 
 import re
 import xmltodict
-from chatterbot import ChatBot
 from chatterbot.trainers import ListTrainer
 
 from sanic import Blueprint
@@ -14,13 +13,13 @@ from sanic.response import text
 from sanic.exceptions import ServerError
 
 from weixin import WeixinMpAPI
-from weixin.reply import WXReply, TextReply, ArticleReply as _ArticleReply
+from weixin.reply import TextReply
 from weixin.response import WXResponse as _WXResponse
 from weixin.lib.WXBizMsgCrypt import WXBizMsgCrypt
 
 from momo.settings import Config
-from momo.helper import validate_xml, smart_str
-from momo.media import media_fetch, weixin_media_url
+from momo.media import media_fetch
+from momo.helper import validate_xml, smart_str, get_momo_answer, set_momo_answer
 from momo.models.wx_response import KWResponse as KWR
 
 
@@ -51,25 +50,6 @@ CUSTOMER_SERVICE_TEMPLATE = '''
 
 momo_learn = re.compile(r'^momoya:"(?P<ask>\S*)"<"(?P<answer>\S*)"')
 
-momo_chat = ChatBot(
-    'Momo',
-    storage_adapter='chatterbot.storage.MongoDatabaseAdapter',
-    logic_adapters=[
-        {
-            "import_path": "chatterbot.logic.BestMatch",
-            "statement_comparison_function": "chatterbot.comparisons.levenshtein_distance",
-            "response_selection_method": "chatterbot.response_selection.get_first_response"
-        },
-        "chatterbot.logic.MathematicalEvaluation",
-        "chatterbot.logic.TimeLogicAdapter",
-    ],
-    input_adapter='chatterbot.input.VariableInputTypeAdapter',
-    output_adapter='chatterbot.output.OutputAdapter',
-    database='chatterbot',
-    read_only=True
-)
-
-
 
 class ReplyContent(object):
 
@@ -86,31 +66,14 @@ class ReplyContent(object):
     @property
     def value(self):
         if self.momo:
-            response = momo_chat.get_response(self.content)
-            if isinstance(response, str):
-                return response
-            return response.text
+            answer = get_momo_answer(self.content)
+            return answer
         return ''
 
     def set(self, conversation):
         if self.momo:
-            momo_chat.set_trainer(ListTrainer)
-            momo_chat.train(conversation)
+            set_momo_answer(conversation)
             return '魔魔学会了！'
-
-
-class CustomerService(WXReply):
-
-    """
-    回复客服消息
-    """
-    TEMPLATE = CUSTOMER_SERVICE_TEMPLATE
-
-    def __init__(self, *args, **kwargs):
-        super(CustomerService, self).__init__(*args, **kwargs)
-
-    def render(self):
-        return self.TEMPLATE.format(**self.params)
 
 
 class Article(object):
@@ -120,15 +83,6 @@ class Article(object):
         self.description = Description or ''
         self.picurl = PicUrl or ''
         self.url = Url or ''
-
-
-class ArticleReply(_ArticleReply):
-
-    def add_article(self, article):
-        if len(self._articles) >= 10:
-            raise AttributeError("Can't add more than 10 articles in an ArticleReply")
-        else:
-            self._articles.append(article)
 
 
 class WXResponse(_WXResponse):
@@ -142,43 +96,8 @@ class WXResponse(_WXResponse):
     def _unsubscribe_event_handler(self):
         pass
 
-    def _unsub_scan_event_handler(self):
-        event_key = self.data.get('EventKey')[8:]
-        content = ReplyContent('scan', event_key)
-        if content.type == 'article':
-            article_reply = ArticleReply(**self.reply_params)
-            values = content.value
-            for value in values:
-                article = Article(**value)
-                article_reply.add_article(article)
-            self.reply = article_reply.render()
-        elif content.type == 'text' or not content.type:
-            self.reply_params['content'] = content.value
-            self.reply = TextReply(**self.reply_params).render()
-
-    def _scan_event_handler(self):
-        # 扫描带参数的二维码 关注的处理方法
-        event_key = self.data.get('EventKey')
-        content = ReplyContent('scan', event_key)
-        if not content.value:
-            return
-        if content.type == 'article':
-            article_reply = ArticleReply(**self.reply_params)
-            values = content.value
-            for value in values:
-                article = Article(**value)
-                article_reply.add_article(article)
-            self.reply = article_reply.render()
-        elif content.type == 'text' or not content.type:
-            self.reply_params['content'] = content.value
-            self.reply = TextReply(**self.reply_params).render()
-        else:
-            return
-
     def _image_msg_handler(self):
         media_id = self.data['MediaId']
-        # 个人订阅号不支持
-        # picurl = weixin_media_url(media_id)
         picurl = None
         if not picurl:
             picurl = self.data['PicUrl']

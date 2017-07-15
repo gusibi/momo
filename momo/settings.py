@@ -4,12 +4,10 @@ from six.moves.urllib.parse import urlparse
 
 class Config(object):
 
-    DEBUG = True
+    DEBUG = False
     TESTING = False
 
-    SECRET_KEY = '53a01e6bd34caef997eed24f5ee9d3e0'
-
-    STATIC_FOLDER = 'static'
+    SECRET_KEY = 'MmPNFrWjQZ3Z9yKZ8PMFQttgHphaq8AZ'
 
     MONGO_MASTER_HOST = environ.get('MONGO_PORT_27017_TCP_ADDR', '127.0.0.1')
     MONGO_MASTER_PORT = environ.get('MONGO_PORT_27017_TCP_PORT', '27017')
@@ -28,9 +26,6 @@ class Config(object):
     WEIXINMP_TOKEN = environ.get('WEIXINMP_TOKEN', 'token')
     WEIXINMP_ENCODINGAESKEY = environ.get(
         'WEIXINMP_ENCODINGAESKEY', '')
-
-    # 微信获取用户信息接口
-    WX_USER_INFO_URL = 'https://api.weixin.qq.com/cgi-bin/user/info'
 
     QINIU_ACCESS_TOKEN = environ.get('QINIU_ACCESS_TOKEN', '')
     QINIU_SECRET_TOKEN = environ.get('QINIU_SECRET_TOKEN', '')
