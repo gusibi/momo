@@ -107,7 +107,7 @@ class BillWorkFlow(object):
         account = Account.get(_id=self.uid)
         action = self.actions['active']
         if not account:
-            account = Account.create(_id=self.uid)
+            account = Account.insert(_id=self.uid)
             status = 'new_uid'
         else:
             status = 'old_uid'
@@ -178,7 +178,7 @@ class BillWorkFlow(object):
         if next == 'done':
             data = params['data']
             data['created_time'] = datetime.utcnow()
-            Bill.create(**data)
+            Bill.insert(**data)
             AW.delete(uid=self.uid)
         elif next == 'clear':
             AW.delete(uid=self.uid)
