@@ -35,7 +35,7 @@ class Tags(HTTPMethodView):
     def get(self, request):
         args = request.raw_args
         _tag = args.get('tag')
-        tag = Tag.create(name=_tag, created_time=datetime.utcnow())
+        tag = Tag.insert(name=_tag, created_time=datetime.utcnow())
         return text(_tag)
 
 
