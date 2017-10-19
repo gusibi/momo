@@ -52,4 +52,4 @@ class ChatBot(HTTPMethodView):
 blueprint.add_route(Index.as_view(), '/')
 # blueprint.add_route(Tags.as_view(), '/add_tag')
 # blueprint.add_route(ChatBot.as_view(), '/momo')
-blueprint.add_route(KWResponse.as_view(), '/kwr')
+# blueprint.add_route(KWResponse.as_view(), '/kwr')
