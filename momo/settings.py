@@ -9,6 +9,12 @@ class Config(object):
 
     SECRET_KEY = 'MmPNFrWjQZ3Z9yKZ8PMFQttgHphaq8AZ'
 
+    MONGO_MASTER_HOST = environ.get('MONGO_PORT_27017_TCP_ADDR', '127.0.0.1')
+    MONGO_MASTER_PORT = environ.get('MONGO_PORT_27017_TCP_PORT', '27017')
+    MONGO_DATABASE = environ.get('MONGO_DATABASE', 'momo_bill')
+    MONGO_MASTER_URL = 'mongodb://%s:%s' % (MONGO_MASTER_HOST,
+                                            MONGO_MASTER_PORT)
+
     APP_TRANSPORT = environ.get('APP_TRANSPORT', 'http')
     APP_DOMAIN = environ.get('APP_DOMAIN', 'http://gusibi.com')
     API_DOMAIN = environ.get('API_DOMAIN', 'http://gusibi.com')

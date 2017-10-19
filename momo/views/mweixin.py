@@ -18,8 +18,9 @@ from weixin.response import WXResponse as _WXResponse
 from weixin.lib.WXBizMsgCrypt import WXBizMsgCrypt
 
 from momo.settings import Config
-from momo.helper import validate_xml, smart_str, get_momo_answer
 from momo.media import media_fetch
+from momo.helper import validate_xml, smart_str, get_momo_answer, set_momo_answer
+from momo.models.wx_response import KWResponse as KWR
 
 
 blueprint = Blueprint('weixin', url_prefix='/weixin')
@@ -32,6 +33,10 @@ AUTO_REPLY_CONTENT = """
 Hi，朋友！
 
 这是我妈四月的公号，我是魔魔，我可以陪你聊天呦！
+
+我还能"记账"，输入"记账"会有惊喜呦！
+
+<a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=MzAwNjI5MjAzNw==&scene=124#wechat_redirect">历史记录</a>
 """
 
 CUSTOMER_SERVICE_TEMPLATE = '''
@@ -67,8 +72,7 @@ class ReplyContent(object):
 
     def set(self, conversation):
         if self.momo:
-            momo_chat.set_trainer(ListTrainer)
-            momo_chat.train(conversation)
+            set_momo_answer(conversation)
             return '魔魔学会了！'
 
 
@@ -86,8 +90,7 @@ class WXResponse(_WXResponse):
     auto_reply_content = AUTO_REPLY_CONTENT
 
     def _subscribe_event_handler(self):
-        content = ReplyContent('subscribe', 'subscribe')
-        self.reply_params['content'] = content.value or self.auto_reply_content
+        self.reply_params['content'] = self.auto_reply_content
         self.reply = TextReply(**self.reply_params).render()
 
     def _unsubscribe_event_handler(self):
@@ -109,13 +112,20 @@ class WXResponse(_WXResponse):
         content = self.data.get('Content')
         match = momo_learn.match(content)
         if match:
+            # 教魔魔说话第一优先级
             conversation = match.groups()
             reply_content = ReplyContent('text', event_key)
             response = reply_content.set(conversation)
             self.reply_params['content'] = response
         else:
-            reply_content = ReplyContent('text', event_key, content)
-            self.reply_params['content'] = reply_content.value
+            # 再查询有没有特殊自动回复消息workflow
+            to_user = self.reply_params['to_user']
+            kwr = KWR(to_user, content)
+            value = kwr.get_response()
+            if not value:
+                reply_content = ReplyContent('text', event_key, content)
+                value = reply_content.value
+            self.reply_params['content'] = value
         self.reply = TextReply(**self.reply_params).render()
 
     def _click_event_handler(self):

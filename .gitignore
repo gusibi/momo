@@ -19,6 +19,7 @@ build/
 dist/
 access.log*
 error.log*
+newrelic.ini
 
 local_settings.py
 

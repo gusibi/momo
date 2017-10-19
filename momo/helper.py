@@ -25,6 +25,8 @@ from decimal import Decimal
 
 
 from chatterbot import ChatBot
+from chatterbot.trainers import ListTrainer
+from chatterbot.response_selection import get_random_response
 
 import six
 
@@ -85,6 +87,7 @@ except ImportError:
 momo_chat = ChatBot(
     'Momo',
     storage_adapter='chatterbot.storage.MongoDatabaseAdapter',
+    response_selection_method=get_random_response,
     logic_adapters=[
         "chatterbot.logic.BestMatch",
         "chatterbot.logic.MathematicalEvaluation",
@@ -102,6 +105,11 @@ def get_momo_answer(content):
     if isinstance(response, str):
         return response
     return response.text
+
+
+def set_momo_answer(conversation):
+    momo_chat.set_trainer(ListTrainer)
+    momo_chat.train(conversation)
 
 
 
