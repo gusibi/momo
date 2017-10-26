@@ -40,6 +40,8 @@ Hi，朋友！
 
 我还能"记账"，输入"记账"会有惊喜呦！
 
+你还可以输入"pm25 北京" 查询北京实时 pm 指数！
+
 <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=MzAwNjI5MjAzNw==&scene=124#wechat_redirect">历史记录</a>
 """
 
@@ -53,7 +55,7 @@ CUSTOMER_SERVICE_TEMPLATE = '''
 '''
 
 momo_learn = re.compile(r'^momoya:"(?P<ask>\S*)"<"(?P<answer>\S*)"')
-pm25 = re.compile(r'^pm25 "(?P<city>\S*)')
+pm25 = re.compile(r'^pm25 (?P<city>\S*)')
 
 
 def get_pm25(city):
@@ -128,7 +130,7 @@ class WXResponse(_WXResponse):
         # 文字消息处理逻辑
         event_key = 'text'
         content = self.data.get('Content')
-        pm25_match = pm25.mach(content)
+        pm25_match = pm25.match(content)
         match = momo_learn.match(content)
         if match:
             # 教魔魔说话第一优先级
