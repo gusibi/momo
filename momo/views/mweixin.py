@@ -7,6 +7,7 @@ import re
 import xmltodict
 from chatterbot.trainers import ListTrainer
 
+import requests
 from sanic import Blueprint
 from sanic.views import HTTPMethodView
 from sanic.response import text
@@ -29,6 +30,9 @@ appid = smart_str(Config.WEIXINMP_APPID)
 token = smart_str(Config.WEIXINMP_TOKEN)
 encoding_aeskey = smart_str(Config.WEIXINMP_ENCODINGAESKEY)
 
+PM25_BASE_URL = 'http://api.waqi.info'
+PM25_TOKEN = Config.PM25_TOKEN
+
 AUTO_REPLY_CONTENT = """
 Hi，朋友！
 
@@ -49,6 +53,20 @@ CUSTOMER_SERVICE_TEMPLATE = '''
 '''
 
 momo_learn = re.compile(r'^momoya:"(?P<ask>\S*)"<"(?P<answer>\S*)"')
+pm25 = re.compile(r'^pm25 "(?P<city>\S*)')
+
+
+def get_pm25(city):
+    url = "{}/search/?token={token}&keyword={city}".format(PM25_BASE_URL, token=PM25_TOKEN, city=city)
+    resp = requests.get(url)
+    if resp.status_code != 200:
+        return '发生了错误'
+    results = resp.json()
+    data = results.get('data')
+    if len(data) == 0:
+        return '没有搜到结果'
+    text = '\n'.join(['PM2.5: {pm25}  @{name}'.format(name=info.get('station').get('name'), pm25=info.get('aqi')) for info in data])
+    return text
 
 
 class ReplyContent(object):
@@ -110,6 +128,7 @@ class WXResponse(_WXResponse):
         # 文字消息处理逻辑
         event_key = 'text'
         content = self.data.get('Content')
+        pm25_match = pm25.mach(content)
         match = momo_learn.match(content)
         if match:
             # 教魔魔说话第一优先级
@@ -117,6 +136,12 @@ class WXResponse(_WXResponse):
             reply_content = ReplyContent('text', event_key)
             response = reply_content.set(conversation)
             self.reply_params['content'] = response
+        elif pm25_match:
+            # pm2.5 查询第二优先级
+            city = pm25_match.groupdict().get('city')
+            reply_content = ReplyContent('text', event_key)
+            text = get_pm25(city)
+            self.reply_params['content'] = text
         else:
             # 再查询有没有特殊自动回复消息workflow
             to_user = self.reply_params['to_user']

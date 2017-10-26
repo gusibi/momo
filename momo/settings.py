@@ -27,6 +27,8 @@ class Config(object):
     WEIXINMP_ENCODINGAESKEY = environ.get(
         'WEIXINMP_ENCODINGAESKEY', '')
 
+    PM25_TOKEN = environ.get('PM25_TOKEN', 'pm25_token')
+
     QINIU_ACCESS_TOKEN = environ.get('QINIU_ACCESS_TOKEN', '')
     QINIU_SECRET_TOKEN = environ.get('QINIU_SECRET_TOKEN', '')
     QINIU_UPLOAD_URL = 'http://up.qiniu.com/'
