@@ -54,14 +54,15 @@ class Model(with_metaclass(ModelMetaclass, object)):
     @classmethod
     def update_or_insert(cls, fields=None, **kwargs):
         '''
-        :param fields: list filter fields 
+        :param fields: list filter fields
         :param kwargs: update fields
-        :return: 
+        :return:
         '''
         if fields:
             filters = {field: kwargs[field] for field in fields if kwargs.get(field)}
             doc = cls.collection.find_one_and_update(
-                filters, kwargs, return_document=ReturnDocument.AFTER, upsert=True)
+                filters, kwargs, upsert=True)
+                # filters, kwargs, return_document=ReturnDocument.AFTER, upsert=True)
         else:
             doc = cls.collection.insert_one(kwargs)
         return doc
@@ -71,7 +72,7 @@ class Model(with_metaclass(ModelMetaclass, object)):
     def bulk_inserts(cls, *params):
         '''
         :param params: document list
-        :return: 
+        :return:
         '''
         results = cls.collection.insert_many(params)
         return results
