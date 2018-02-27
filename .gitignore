@@ -6,6 +6,7 @@
 
 # build
 .gitconfig
+.qiniu_pythonsdk_hostscache.json
 .installed.cfg
 .ropeproject/
 ./momo/ropeproject/

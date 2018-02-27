@@ -38,9 +38,9 @@ Hi，朋友！
 
 这是我妈四月的公号，我是魔魔，我可以陪你聊天呦！
 
-我还能"记账"，输入"记账"会有惊喜呦！
+你可以输入"pm25 城市名" 查询实时 pm 指数！
 
-你还可以输入"pm25 北京" 查询北京实时 pm 指数！
+也可以试试"菜单"、"并发"、"协程" 等关键字吼！
 
 <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=MzAwNjI5MjAzNw==&scene=124#wechat_redirect">历史记录</a>
 """
@@ -67,7 +67,9 @@ def get_pm25(city):
     data = results.get('data')
     if len(data) == 0:
         return '没有搜到结果'
-    text = '\n'.join(['PM2.5: {pm25}  @{name}'.format(name=info.get('station').get('name'), pm25=info.get('aqi')) for info in data])
+    text = '\n'.join(['PM2.5: {pm25}  {name}'.format(
+        name=info.get('station').get('name', '').split(';')[0],
+        pm25=info.get('aqi')) for info in data])
     return text
 
 
