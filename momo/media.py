@@ -12,7 +12,7 @@ import urllib
 import requests
 from requests.exceptions import ConnectTimeout, ReadTimeout
 
-from qiniu import Auth, BucketManager
+from qiniu import Auth, BucketManager, put_file
 
 from momo.helper import smart_str
 from momo.settings import Config
@@ -169,6 +169,20 @@ def qiniu_auth():
     secret_key = str(Config.QINIU_SECRET_TOKEN)
     auth = Auth(access_key, secret_key)
     return auth
+
+
+def get_qiniu_token(key=None, bucket_name=None):
+    q = qiniu_auth()
+    bucket_name = bucket_name or Config.QINIU_BUCKET
+    token = q.upload_token(bucket_name, key, 3600)
+    return token
+
+
+def upload_file(file_path, key=None, **kwargs):
+    bucket_name = kwargs.pop('bucket_name', None)
+    token = get_qiniu_token(key, bucket_name=bucket_name)
+    ret, info = put_file(token, key, file_path, **kwargs)
+    return ret, info
 
 
 def media_copy(key, from_bucket, to_bucket):

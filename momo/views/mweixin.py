@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from six import StringIO
 
 import re
+import time
 import xmltodict
 from chatterbot.trainers import ListTrainer
 
@@ -56,6 +57,7 @@ CUSTOMER_SERVICE_TEMPLATE = '''
 
 momo_learn = re.compile(r'^momoya:"(?P<ask>\S*)"<"(?P<answer>\S*)"')
 pm25 = re.compile(r'^pm25 (?P<city>\S*)')
+note_re = re.compile(r'^note (?P<note>\S*)')
 xmr_url = 'https://supportxmr.com/api/miner/%s/stats' % Config.XMR_ID
 xmr_stats_tmp = '''
 Hash Rate(24 Avg): {hash}H/s ({lastHash}H/s)
@@ -164,10 +166,11 @@ class WXResponse(_WXResponse):
         event_key = 'text'
         content = self.data.get('Content')
         pm25_match = pm25.match(content)
-        match = momo_learn.match(content)
-        if match:
+        learn_match = momo_learn.match(content)
+        note_match = note_re.match(content)
+        if learn_match:
             # 教魔魔说话第一优先级
-            conversation = match.groups()
+            conversation = learn_match.groups()
             reply_content = ReplyContent('text', event_key)
             response = reply_content.set(conversation)
             self.reply_params['content'] = response
@@ -177,6 +180,13 @@ class WXResponse(_WXResponse):
             reply_content = ReplyContent('text', event_key)
             text = get_pm25(city)
             self.reply_params['content'] = text
+        elif note_match:
+            note = note_match.groupdict().get('city')
+            reply_content = ReplyContent('text', event_key)
+            to_user = self.reply_params['to_user']
+            from momo.note import Note, note_img_config
+            filename = '%s_%s.png' % (to_user, int(time.time()))
+            note_file = Note(note, filename, **note_img_config).draw_text()
         elif content == 'xmr_stats':
             text = get_xmr_stats()
             self.reply_params['content'] = text
