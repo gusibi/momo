@@ -28,7 +28,7 @@ class Note:
         self.footer_height = footer_height
         self.body_width, self.body_height = body_wh
         self.text_lines, self.note_height, self.line_height = self.split_text()
-        self.filename = filename
+        self.filename = '/tmp/%s' % filename
         self.background_img = None
 
     def split_text(self):
@@ -65,6 +65,7 @@ class Note:
                 draw.text((x, y), '', fill=(110, 99, 87), font=font)
                 y += self.line_height / 2
         note_img.save(self.filename, "png")
+        return self.filename
 
     def get_images(self):
         numbers = self.note_height // self.body_height + 1
@@ -80,7 +81,7 @@ class Note:
         # 最终拼接完成后的图片
         backgroud = Image.new('RGB', (self.body_width, total_height))
         left, right = 0, 0
-        background_img = '%s_backgroud.png' % total_height
+        background_img = '/tmp/%s_backgroud.png' % total_height
         for image_file, height in images:
             image = Image.open(image_file)
             # (0, left, self.body_width, right+height)

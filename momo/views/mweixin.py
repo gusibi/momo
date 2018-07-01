@@ -6,7 +6,7 @@ from six import StringIO
 import re
 import time
 import xmltodict
-from chatterbot.trainers import ListTrainer
+# from chatterbot.trainers import ListTrainer
 
 import requests
 from sanic import Blueprint
@@ -57,7 +57,6 @@ CUSTOMER_SERVICE_TEMPLATE = '''
 
 momo_learn = re.compile(r'^momoya:"(?P<ask>\S*)"<"(?P<answer>\S*)"')
 pm25 = re.compile(r'^pm25 (?P<city>\S*)')
-note_re = re.compile(r'^note (?P<note>\S*)')
 xmr_url = 'https://supportxmr.com/api/miner/%s/stats' % Config.XMR_ID
 xmr_stats_tmp = '''
 Hash Rate(24 Avg): {hash}H/s ({lastHash}H/s)
@@ -167,7 +166,6 @@ class WXResponse(_WXResponse):
         content = self.data.get('Content')
         pm25_match = pm25.match(content)
         learn_match = momo_learn.match(content)
-        note_match = note_re.match(content)
         if learn_match:
             # 教魔魔说话第一优先级
             conversation = learn_match.groups()
@@ -180,8 +178,8 @@ class WXResponse(_WXResponse):
             reply_content = ReplyContent('text', event_key)
             text = get_pm25(city)
             self.reply_params['content'] = text
-        elif note_match:
-            note = note_match.groupdict().get('city')
+        elif content.startswith('note '):
+            note = content.replace('note ', '')
             reply_content = ReplyContent('text', event_key)
             to_user = self.reply_params['to_user']
             from momo.note import Note, note_img_config
