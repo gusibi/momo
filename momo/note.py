@@ -10,7 +10,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 from momo.settings import Config
 
-otf = 'SourceHanSansSC-Regular.otf'
+otf = Config.NOTE_OTF
 font = ImageFont.truetype(otf, 40)
 
 

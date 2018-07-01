@@ -20,7 +20,7 @@ from weixin.response import WXResponse as _WXResponse
 from weixin.lib.WXBizMsgCrypt import WXBizMsgCrypt
 
 from momo.settings import Config
-from momo.media import media_fetch
+from momo.media import media_fetch, upload_file
 from momo.helper import validate_xml, smart_str, get_momo_answer, set_momo_answer
 from momo.models.wx_response import KWResponse as KWR
 
@@ -187,6 +187,10 @@ class WXResponse(_WXResponse):
             from momo.note import Note, note_img_config
             filename = '%s_%s.png' % (to_user, int(time.time()))
             note_file = Note(note, filename, **note_img_config).draw_text()
+            upload_file(note_file, filename, bucket_name=Config.QINIU_BUCKET)
+            qiniu_url = '{host}/{key}'.format(host=Config.QINIU_HOST,
+                                              key=filename)
+            self.reply_params['content'] = qiniu_url
         elif content == 'xmr_stats':
             text = get_xmr_stats()
             self.reply_params['content'] = text

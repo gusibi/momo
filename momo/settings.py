@@ -50,6 +50,8 @@ class Config(object):
         'host': QINIU_AUDIOS_HOST
     }
 
+    NOTE_OTF = path.normpath(path.join(
+        path.dirname(__file__), 'note_imgs/SourceHanSansSC-Regular.otf'))
     NOTE_HEADER_IMG = path.normpath(path.join(
         path.dirname(__file__), 'note_imgs/note_header.png'))
     NOTE_BODY_IMG = path.normpath(path.join(
