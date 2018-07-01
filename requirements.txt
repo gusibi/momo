@@ -1,9 +1,10 @@
 six
 lxml
+qiniu
 Sanic
 xmltodict
 jsonschema
-git+https://github.com/gusibi/python-weixin.git@py3
+git+https://github.com/gusibi/python-weixin.git
 pyyaml
 pycrypto
 chatterbot

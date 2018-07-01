@@ -56,20 +56,51 @@ CUSTOMER_SERVICE_TEMPLATE = '''
 
 momo_learn = re.compile(r'^momoya:"(?P<ask>\S*)"<"(?P<answer>\S*)"')
 pm25 = re.compile(r'^pm25 (?P<city>\S*)')
+xmr_url = 'https://supportxmr.com/api/miner/%s/stats' % Config.XMR_ID
+xmr_stats_tmp = '''
+Hash Rate(24 Avg): {hash}H/s ({lastHash}H/s)
+Total Hashes: {totalHashes}
+Valid Shares: {validShares}
+Total Due: {amtDue} XMR
+Total Paid: {amtPaid} XMR
+'''
+
+
+def get_response(url, format='json'):
+    resp = requests.get(url)
+    if resp.status_code != 200:
+        return '发生了错误'
+    if format == 'json':
+        results = resp.json()
+        return results
 
 
 def get_pm25(city):
     url = "{}/search/?token={token}&keyword={city}".format(PM25_BASE_URL, token=PM25_TOKEN, city=city)
-    resp = requests.get(url)
-    if resp.status_code != 200:
-        return '发生了错误'
-    results = resp.json()
+    results = get_response(url)
+    if not isinstance(results, dict):
+        return results
     data = results.get('data')
     if len(data) == 0:
         return '没有搜到结果'
     text = '\n'.join(['PM2.5: {pm25}  {name}'.format(
         name=info.get('station').get('name', '').split(';')[0],
         pm25=info.get('aqi')) for info in data])
+    return text
+
+
+def format_xmr_stats(data):
+    data['lastHash'] = data.get('lastHash', 0) // (10**7)
+    data['amtDue'] = data.get('amtDue', 0.0) / (10**12)
+    return data
+
+
+def get_xmr_stats():
+    results = get_response(xmr_url)
+    if not isinstance(results, dict):
+        return results
+    data = format_xmr_stats(results)
+    text = xmr_stats_tmp.format(**data)
     return text
 
 
@@ -146,6 +177,9 @@ class WXResponse(_WXResponse):
             reply_content = ReplyContent('text', event_key)
             text = get_pm25(city)
             self.reply_params['content'] = text
+        elif content == 'xmr_stats':
+            text = get_xmr_stats()
+            self.reply_params['content'] = text
         else:
             # 再查询有没有特殊自动回复消息workflow
             to_user = self.reply_params['to_user']
@@ -154,6 +188,8 @@ class WXResponse(_WXResponse):
             if not value:
                 reply_content = ReplyContent('text', event_key, content)
                 value = reply_content.value
+            if value.startswith('The current time is'):
+                value = content
             self.reply_params['content'] = value
         self.reply = TextReply(**self.reply_params).render()
 

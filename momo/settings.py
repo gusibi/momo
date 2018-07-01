@@ -28,6 +28,7 @@ class Config(object):
         'WEIXINMP_ENCODINGAESKEY', '')
 
     PM25_TOKEN = environ.get('PM25_TOKEN', 'pm25_token')
+    XMR_ID = environ.get('XMR_ID', '')
 
     QINIU_ACCESS_TOKEN = environ.get('QINIU_ACCESS_TOKEN', '')
     QINIU_SECRET_TOKEN = environ.get('QINIU_SECRET_TOKEN', '')
