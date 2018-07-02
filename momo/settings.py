@@ -58,8 +58,8 @@ class Config(object):
         path.dirname(__file__), 'note_imgs/note_body.png'))
     NOTE_FOOTER_IMG = path.normpath(path.join(
         path.dirname(__file__), 'note_imgs/note_footer.png'))
-    NOTE_WIDTH = 988
+    NOTE_WIDTH = 990
     NOTE_TEXT_WIDTH = 760
     NOTE_BODY_HEIGHT = 309
     NOTE_HEADER_HEIGHT = 133
-    NOTE_FOOTER_HEIGHT = 225
+    NOTE_FOOTER_HEIGHT = 218
