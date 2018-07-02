@@ -49,8 +49,9 @@ class Note:
                 linetext += char
                 max_height = max(h, max_height)
             text_lines.append(linetext + '\n')
-        total_height = len(text_lines) * (max_height + 10)  # 行高多一点
-        return text_lines, total_height, max_height + 10
+        line_height = max_height + 10  # 行高多一点
+        total_height = len(text_lines) * line_height
+        return text_lines, total_height, line_height
 
     def draw_text(self):
         background_img = self.make_backgroud()
@@ -61,9 +62,6 @@ class Note:
         for text in self.text_lines:
             draw.text((x, y), text, fill=(110, 99, 87), font=font)
             y += self.line_height
-            if text.endswith('\n'):
-                draw.text((x, y), '', fill=(110, 99, 87), font=font)
-                y += self.line_height / 2
         note_img.save(self.filename, "png")
         return self.filename
 
