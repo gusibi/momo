@@ -52,14 +52,29 @@ class Config(object):
 
     NOTE_OTF = path.normpath(path.join(
         path.dirname(__file__), 'note_imgs/SourceHanSansSC-Regular.otf'))
+    NOTE_SIZE = 660
+    if NOTE_SIZE == 990:
+        NOTE_HEADER_FILE = 'note_header.png'
+        NOTE_FOOTER_FILE = 'note_footer.png'
+        NOTE_BODY_FILE = 'note_body.png'
+        NOTE_WIDTH = 990
+        NOTE_TEXT_WIDTH = 760
+        NOTE_BODY_HEIGHT = 309
+        NOTE_HEADER_HEIGHT = 133
+        NOTE_FOOTER_HEIGHT = 218
+    else:
+        NOTE_HEADER_FILE = 'note_header_660.png'
+        NOTE_FOOTER_FILE = 'note_footer_660.png'
+        NOTE_BODY_FILE = 'note_body_660.png'
+        NOTE_WIDTH = 660
+        NOTE_TEXT_WIDTH = 460
+        NOTE_BODY_HEIGHT = 206
+        NOTE_HEADER_HEIGHT = 89
+        NOTE_FOOTER_HEIGHT = 145
+
     NOTE_HEADER_IMG = path.normpath(path.join(
-        path.dirname(__file__), 'note_imgs/note_header.png'))
+        path.dirname(__file__), 'note_imgs/%s' % NOTE_HEADER_FILE))
     NOTE_BODY_IMG = path.normpath(path.join(
-        path.dirname(__file__), 'note_imgs/note_body.png'))
+        path.dirname(__file__), 'note_imgs/%s' % NOTE_BODY_FILE))
     NOTE_FOOTER_IMG = path.normpath(path.join(
-        path.dirname(__file__), 'note_imgs/note_footer.png'))
-    NOTE_WIDTH = 990
-    NOTE_TEXT_WIDTH = 760
-    NOTE_BODY_HEIGHT = 309
-    NOTE_HEADER_HEIGHT = 133
-    NOTE_FOOTER_HEIGHT = 218
+        path.dirname(__file__), 'note_imgs/%s' % NOTE_FOOTER_FILE))

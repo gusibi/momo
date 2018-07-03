@@ -18,51 +18,67 @@ class Note:
 
     def __init__(self, text, filename, header=None, body=None, footer=None,
                  header_height=None, footer_height=None,
-                 body_wh=None, note_width=None):
+                 body_wh=None, note_width=None, line_padding=10):
         self.text = text
         self.header = header
         self.body = body
         self.footer = footer
         self.note_width = note_width
+        self.line_padding = line_padding  # 行高 padding
         self.header_height = header_height
         self.footer_height = footer_height
         self.body_width, self.body_height = body_wh
-        self.text_lines, self.note_height, self.line_height = self.split_text()
+        self.paragraphs, self.note_height, self.line_height = self.split_text()
         self.filename = '/tmp/%s' % filename
         self.background_img = None
 
-    def split_text(self):
-        # 将文本按规定宽度分组
+    def get_paragraph(self, text):
         txt = Image.new('RGBA', (100, 100), (255, 255, 255, 0))
         # get a drawing context
         draw = ImageDraw.Draw(txt)
-        text_lines = []
-        max_height = 0
+        paragraph, sum_width = '', 0
+        line_numbers, line_height = 1, 0
+        for char in text:
+            w, h = draw.textsize(char, font)
+            sum_width += w
+            if sum_width > self.note_width:
+                line_numbers += 1
+                sum_width = 0
+                paragraph += '\n'
+            paragraph += char
+            line_height = max(h, line_height)
+        if not paragraph.endswith('\n'):
+            paragraph += '\n'
+        return paragraph, line_height, line_numbers
+
+    def split_text(self):
+        # 将文本按规定宽度分组
+        max_line_height, total_lines = 0, 0
+        paragraphs = []
         for t in self.text.split('\n'):
-            linetext, sum_width = '', 0
-            for char in t:
-                w, h = draw.textsize(char, font)
-                sum_width += w
-                if sum_width > self.note_width:
-                    text_lines.append(linetext)
-                    linetext, sum_width = '', 0
-                linetext += char
-                max_height = max(h, max_height)
-            text_lines.append(linetext + '\n')
-        line_height = max_height + 10  # 行高多一点
-        total_height = len(text_lines) * line_height
-        return text_lines, total_height, line_height
+            paragraph, line_height, line_numbers = self.get_paragraph(t)
+            max_line_height = max(line_height, max_line_height)
+            total_lines += line_numbers
+            paragraphs.append((paragraph, line_numbers))
+        line_height = max_line_height + self.line_padding # 行高多一点
+        total_height = total_lines * line_height
+        return paragraphs, total_height, line_height
 
     def draw_text(self):
+        start = time.time()
         background_img = self.make_backgroud()
+        end = time.time()
         note_img = Image.open(background_img).convert("RGBA")
         draw = ImageDraw.Draw(note_img)
         # 文字开始位置
         x, y = 80, 100
-        for text in self.text_lines:
-            draw.text((x, y), text, fill=(110, 99, 87), font=font)
-            y += self.line_height
-        note_img.save(self.filename, "png")
+        for paragraph, line_numbers in self.paragraphs:
+            for line in paragraph.split('\n')[:-1]:
+                draw.text((x, y), line, fill=(110, 99, 87), font=font)
+                y += self.line_height
+            # draw.text((x, y), paragraph, fill=(110, 99, 87), font=font)
+            # y += self.line_height * line_numbers
+        note_img.save(self.filename, "png", quality=1, optimize=True)
         return self.filename
 
     def get_images(self):
@@ -80,6 +96,9 @@ class Note:
         backgroud = Image.new('RGB', (self.body_width, total_height))
         left, right = 0, 0
         background_img = '/tmp/%s_backgroud.png' % total_height
+        # 判断背景图是否存在
+        if path.exists(background_img):
+            return background_img
         for image_file, height in images:
             image = Image.open(image_file)
             # (0, left, self.body_width, right+height)
@@ -88,7 +107,7 @@ class Note:
             backgroud.paste(image, (0, left, self.body_width, right+height))
             left += height  # 从上往下拼接，左上角的纵坐标递增
             right += height  # 左下角的纵坐标也递增
-            backgroud.save(background_img, quality=100)
+        backgroud.save(background_img, quality=85)
         self.background_img = background_img
         return background_img
 
