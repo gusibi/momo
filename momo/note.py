@@ -5,13 +5,15 @@
 2. 将 note_header.png 拼接到 note_body.png 上边
 3. 将 note_footer.png 拼接到 note_body.png 后边
 """
+import time
+from os import path
 
 from PIL import Image, ImageDraw, ImageFont
 
 from momo.settings import Config
 
 otf = Config.NOTE_OTF
-font = ImageFont.truetype(otf, 40)
+font = ImageFont.truetype(otf, 24)
 
 
 class Note:
@@ -65,9 +67,7 @@ class Note:
         return paragraphs, total_height, line_height
 
     def draw_text(self):
-        start = time.time()
         background_img = self.make_backgroud()
-        end = time.time()
         note_img = Image.open(background_img).convert("RGBA")
         draw = ImageDraw.Draw(note_img)
         # 文字开始位置
@@ -121,3 +121,4 @@ note_img_config = {
     'body_wh': (Config.NOTE_WIDTH, Config.NOTE_BODY_HEIGHT),
     'note_width': Config.NOTE_TEXT_WIDTH,
 }
+print(note_img_config)

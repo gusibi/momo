@@ -6,13 +6,12 @@ try:
 except ImportError:
     from string import letters, digits
 import random
-from six.moves.urllib.parse import urlparse
 from hashlib import md5
 import urllib
-import requests
-from requests.exceptions import ConnectTimeout, ReadTimeout
 
 from qiniu import Auth, BucketManager, put_file
+from qcloud_cos import (CosConfig, CosS3Client,
+                        CosServiceError, CosClientError)
 
 from momo.helper import smart_str
 from momo.settings import Config
@@ -71,89 +70,7 @@ def qiniu_sign_url(hash_key, expires=1800):
     return url
 
 
-class MediaInfo(object):
-
-    def __init__(self, key):
-        self.key = key
-        self.url = qiniu_sign_url(key)
-
-    def avinfo(self):
-        url = '%s&avinfo' % self.url
-        try:
-            req = requests.get(url, timeout=(2, 2))
-        except (ConnectTimeout, ReadTimeout):
-            return {}
-        if req.status_code == 200:
-            info = req.json()
-            return info.get('format', {})
-        return {}
-
-    @property
-    def duration(self):
-        avinfo = self.avinfo()
-        if not avinfo:
-            return 0
-        duration = avinfo.get('duration', 0)
-        try:
-            duration = int(float(duration) + 0.5)
-            return duration
-        except ValueError:
-            return 0
-
-    @property
-    def size(self):
-        avinfo = self.avinfo()
-        if not avinfo:
-            return None
-        size = avinfo.get('size', -1)
-        try:
-            size = int(size) / 1000
-            return size
-        except ValueError:
-            return -1
-
-    @property
-    def md5(self):
-        url = '%s&hash/md5' % self.url
-        try:
-            req = requests.get(url, timeout=(2, 2))
-        except (ConnectTimeout, ReadTimeout):
-            return ''
-        if req.status_code == 200:
-            info = req.json()
-            return info.get('md5', '')
-        return ''
-
-
-def media_for(hash_key, scheme=None, style=None):
-    if not hash_key:
-        return None
-    url = hash_key.split('!')[0]
-    up = urlparse(url)
-    hash_domain = up.hostname
-    if hash_domain and hash_domain not in Config.QINIU_DOMAINS:
-        if hash_domain == 'wx.qlogo.cn':
-            hash_key = hash_key.replace('http://', 'https://')
-        return hash_key
-    _hash = up.path
-    if len(_hash) != 0 and _hash[0] == '/':
-        _hash = _hash[1:]
-
-    media_host = Config.QINIU_HOST
-    url = '%s/%s' % (media_host, _hash)
-    if url.endswith('.amr'):
-        url = '%s.mp3' % url[:-4]
-    if url and style:
-        url = '%s!%s' % (url, style)
-    return url
-
-
-def image_for(image, style=None, scheme=None):
-    url = media_for(image, scheme=scheme, style=style)
-    return url
-
-
-def media_fetch(media_url, media_id):
+def media_fetch_to_qiniu(media_url, media_id):
     '''抓取url的资源存储在库'''
     auth = qiniu_auth()
     bucket = BucketManager(auth)
@@ -178,32 +95,34 @@ def get_qiniu_token(key=None, bucket_name=None):
     return token
 
 
-def upload_file(file_path, key=None, **kwargs):
+def upload_file_to_qiniu(file_path, key=None, **kwargs):
     bucket_name = kwargs.pop('bucket_name', None)
     token = get_qiniu_token(key, bucket_name=bucket_name)
     ret, info = put_file(token, key, file_path, **kwargs)
     return ret, info
 
 
-def media_copy(key, from_bucket, to_bucket):
-    auth = qiniu_auth()
-    bucket = BucketManager(auth)
-    ret, info = bucket.stat(from_bucket, key)
-    if ret:
-        ret, info = bucket.copy(from_bucket, key,
-                                to_bucket, key)
-    return ret, info
+def get_cos_client(secret_id=None, secret_key=None,
+                   region=None, token=''):
+    # 设置用户属性, 包括secret_id, secret_key, region
+    secret_id = secret_id or Config.QCOS_SECRET_ID
+    secret_key = secret_key or Config.QCOS_SECRET_KEY
+    region = region or Config.QCOS_REGION
+    token = ''                 # 使用临时秘钥需要传入Token，默认为空,可不填
+    config = CosConfig(Region=region, Secret_id=secret_id,
+                       Secret_key=secret_key, Token=token)  # 获取配置对象
+    client = CosS3Client(config)
+    return client
 
 
-def qiniu_image_hash(hash_key):
-    if not hash_key:
-        return False, None
-    url = hash_key.split('!')[0]
-    up = urlparse(url)
-    hash_domain = up.hostname
-    if hash_domain and hash_domain not in Config.QINIU_DOMAINS:
-        return False, hash_key
-    _hash = up.path
-    if len(_hash) != 0 and _hash[0] == '/':
-        _hash = _hash[1:]
-    return True, _hash
+def upload_file_to_qcos(filepath, file_name, appid=None, bucket='note'):
+    # 本地路径 简单上传
+    appid = appid or Config.QCOS_APPID
+    bucket = '%s-%s' % (bucket, appid)
+    client = get_cos_client()
+    response = client.put_object_from_local_file(
+        Bucket=bucket,
+        LocalFilePath=filepath,
+        Key=file_name,
+    )
+    return response

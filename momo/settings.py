@@ -50,6 +50,13 @@ class Config(object):
         'host': QINIU_AUDIOS_HOST
     }
 
+    QCOS_HOST = environ.get('QCOS_HOST', 'http://note.gusibi.mobi')
+    QCOS_SECRET_ID = environ.get('QCOS_SECRET_ID', '')
+    QCOS_SECRET_KEY = environ.get('QCOS_SECRET_KEY', '')
+    QCOS_REGION = environ.get('QCOS_REGION', 'ap-beijing')
+    QCOS_APPID = environ.get('QCOS_APPID', '')
+    QCOS_BUCKET = environ.get('QCOS_BUCKET', 'note')
+
     NOTE_OTF = path.normpath(path.join(
         path.dirname(__file__), 'note_imgs/SourceHanSansSC-Regular.otf'))
     NOTE_SIZE = 660
