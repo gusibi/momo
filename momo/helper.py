@@ -13,6 +13,7 @@ Description: Weixin helpers
 
 import sys
 import time
+import logging
 import datetime
 
 try:
@@ -101,7 +102,10 @@ momo_chat = ChatBot(
 
 
 def get_momo_answer(content):
-    response = momo_chat.get_response(content)
+    try:
+        response = momo_chat.get_response(content)
+    except:
+        return content
     if isinstance(response, str):
         return response
     return response.text
@@ -111,6 +115,55 @@ def set_momo_answer(conversation):
     momo_chat.set_trainer(ListTrainer)
     momo_chat.train(conversation)
 
+
+log_format = '>' * 10 + "%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s"
+logging.basicConfig(format=log_format)
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+
+
+def timeit(fn):
+
+    @wraps(fn)
+    def real_fn(*args, **kwargs):
+        _start = time.time()
+        result = fn(*args, **kwargs)
+        _end = time.time()
+        _last = _end - _start
+        logger.debug('End timeit for %s in %s seconds.' %
+                     (fn.__name__, _last))
+        return result
+
+    return real_fn
+
+
+try:
+    from line_profiler import LineProfiler
+except:
+    class LineProfiler():
+        def __call__(self, func):
+           return func
+
+        def print_stats(self):
+            pass
+
+
+ln_profile = LineProfiler()
+
+
+def lprofile(fn):
+    '''
+    用line_profiler输出代码行时间统计信息
+    '''
+    fn = ln_profile(fn)
+
+    @wraps(fn)
+    def _fn(*args, **kwargs):
+        result = fn(*args, **kwargs)
+        print('>' * 10)
+        ln_profile.print_stats()
+        return result
+    return _fn
 
 
 class Promise(object):
@@ -414,3 +467,20 @@ def get_weixinmp_token(appid, app_secret, is_refresh=False):
     except (OAuth2AuthExchangeError, ConnectTimeoutError,
             ConnectionError) as ex:
         return None, ex
+
+
+@timeit
+def get_weixinmp_media_id(access_token, filepath):
+    import requests
+    upload_url = 'https://api.weixin.qq.com/cgi-bin/media/upload'
+    payload_img = {
+        'access_token': access_token,
+        'type': 'image'
+    }
+    data = {'media': open(filepath, 'rb')}
+    req = requests.post(url=upload_url, params=payload_img, files=data)
+    if req.status_code == 200:
+        info = req.json()
+        media_id = info.get('media_id', '')
+        return media_id
+    return ''

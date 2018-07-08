@@ -15,19 +15,22 @@ from sanic.response import text
 from sanic.exceptions import ServerError
 
 from weixin import WeixinMpAPI
-from weixin.reply import TextReply
+from weixin.reply import TextReply, ImageReply
 from weixin.response import WXResponse as _WXResponse
 from weixin.lib.WXBizMsgCrypt import WXBizMsgCrypt
 
 from momo.settings import Config
 from momo.media import media_fetch_to_qiniu, upload_file_to_qcos
-from momo.helper import validate_xml, smart_str, get_momo_answer, set_momo_answer
+from momo.helper import (validate_xml, smart_str,
+                         get_momo_answer, set_momo_answer,
+                         get_weixinmp_token, get_weixinmp_media_id)
 from momo.models.wx_response import KWResponse as KWR
 
 
 blueprint = Blueprint('weixin', url_prefix='/weixin')
 
 appid = smart_str(Config.WEIXINMP_APPID)
+secret = smart_str(Config.WEIXINMP_APP_SECRET)
 token = smart_str(Config.WEIXINMP_TOKEN)
 encoding_aeskey = smart_str(Config.WEIXINMP_ENCODINGAESKEY)
 
@@ -180,15 +183,24 @@ class WXResponse(_WXResponse):
             self.reply_params['content'] = text
         elif content.startswith('note '):
             note = content.replace('note ', '')
+            if content.startswith('note -u '):
+                note = content.replace('note -u ', '')
             reply_content = ReplyContent('text', event_key)
             to_user = self.reply_params['to_user']
             from momo.note import Note, note_img_config
             filename = '%s_%s.png' % (to_user, int(time.time()))
             note_file = Note(note, filename, **note_img_config).draw_text()
-            upload_file_to_qcos(note_file, filename)
-            qiniu_url = '{host}/{key}'.format(host=Config.QCOS_HOST,
-                                              key=filename)
-            self.reply_params['content'] = qiniu_url
+            if content.startswith('note -u '):
+                upload_file_to_qcos(note_file, filename)
+                qiniu_url = '{host}/{key}'.format(host=Config.QCOS_HOST,
+                                                  key=filename)
+                self.reply_params['content'] = qiniu_url
+            else:
+                access_token, _ = get_weixinmp_token(appid, secret)
+                media_id = get_weixinmp_media_id(access_token, note_file)
+                self.reply_params['media_id'] = media_id
+                self.reply = ImageReply(**self.reply_params).render()
+                return
         elif content == 'xmr_stats':
             text = get_xmr_stats()
             self.reply_params['content'] = text
