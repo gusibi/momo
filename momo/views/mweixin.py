@@ -44,7 +44,7 @@ Hi，朋友！
 
 你可以输入"pm25 城市名" 查询实时 pm 指数！
 
-也可以试试"菜单"、"并发"、"协程" 等关键字吼！
+也可以试试"菜单"、"并发"、"协程"、"设计模式" 等关键字吼！
 
 <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=MzAwNjI5MjAzNw==&scene=124#wechat_redirect">历史记录</a>
 """
@@ -182,9 +182,10 @@ class WXResponse(_WXResponse):
             text = get_pm25(city)
             self.reply_params['content'] = text
         elif content.startswith('note '):
-            note = content.replace('note ', '')
             if content.startswith('note -u '):
-                note = content.replace('note -u ', '')
+                note = content[8:]
+            else:
+                note = content[5:]
             reply_content = ReplyContent('text', event_key)
             to_user = self.reply_params['to_user']
             from momo.note import Note, note_img_config

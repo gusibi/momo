@@ -1,5 +1,4 @@
 # -*-coding: utf-8 -*-
-# !/usr/bin/env python
 from __future__ import unicode_literals
 
 """
@@ -24,12 +23,13 @@ from functools import wraps
 from hashlib import sha1
 from decimal import Decimal
 
-
 from chatterbot import ChatBot
 from chatterbot.trainers import ListTrainer
 from chatterbot.response_selection import get_random_response
 
 import six
+
+from momo.settings import Config
 
 PY2 = sys.version_info[0] == 2
 
@@ -88,14 +88,15 @@ except ImportError:
 momo_chat = ChatBot(
     'Momo',
     storage_adapter='chatterbot.storage.MongoDatabaseAdapter',
-    response_selection_method=get_random_response,
+    # response_selection_method=get_random_response,
     logic_adapters=[
         "chatterbot.logic.BestMatch",
         "chatterbot.logic.MathematicalEvaluation",
-        "chatterbot.logic.TimeLogicAdapter",
+        # "chatterbot.logic.TimeLogicAdapter",
     ],
     input_adapter='chatterbot.input.VariableInputTypeAdapter',
     output_adapter='chatterbot.output.OutputAdapter',
+    database_uri=Config.MONGO_MASTER_URL,
     database='chatterbot',
     read_only=True
 )

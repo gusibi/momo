@@ -1,0 +1,24 @@
+[[source]]
+url = "http://mirrors.tencentyun.com/pypi/simple"
+verify_ssl = true
+name = "pypi"
+
+[dev-packages]
+
+[packages]
+six = "*"
+lxml = "*"
+qiniu = "*"
+xmltodict = "*"
+jsonschema = "*"
+pycrypto = "*"
+chatterbot = "*"
+python-weixin = "*"
+"cos-python-sdk-v5" = "*"
+Sanic = "*"
+PyYAML = "*"
+Pillow = "*"
+uvloop = "*"
+
+[requires]
+python_version = "3.5"

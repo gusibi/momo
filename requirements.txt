@@ -4,7 +4,9 @@ qiniu
 Sanic
 xmltodict
 jsonschema
-git+https://github.com/gusibi/python-weixin.git
 pyyaml
+pillow
 pycrypto
 chatterbot
+python-weixin
+cos-python-sdk-v5
