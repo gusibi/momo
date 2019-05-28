@@ -2,7 +2,7 @@
 微信记账助手
 
 
-# 测试使用请关注微信公号(April_Louisa)测试
+# 测试使用请关注微信公号(hiiiapril)测试
 
 ![](http://media.gusibi.mobi/Hy8XHexmzppNKuekLuGxWy8LjdGrQAzZA3mH_e9xltoiYgTFWdvlpZwGWxZESrbK)
 
