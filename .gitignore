@@ -27,3 +27,5 @@ local_settings.py
 # test
 test_example.py
 test_settings.py
+
+Pipfile.lock

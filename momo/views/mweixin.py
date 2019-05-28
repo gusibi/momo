@@ -44,7 +44,7 @@ Hi，朋友！
 
 你可以输入"pm25 城市名" 查询实时 pm 指数！
 
-也可以试试"菜单"、"并发"、"协程"、"设计模式" 等关键字吼！
+也可以试试"菜单"、"note"、"并发"、"协程"、"设计模式" 等关键字吼！
 
 <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=MzAwNjI5MjAzNw==&scene=124#wechat_redirect">历史记录</a>
 """
